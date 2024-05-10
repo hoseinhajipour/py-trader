@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import MetaTrader5 as mt5
+import time
 import json
 
 app = Flask(__name__)
@@ -10,16 +11,17 @@ app = Flask(__name__)
 meta_trader_accounts = {}
 
 def get_account_balance(account_id):
-    # Initialize MetaTrader 5 terminal
-    mt5.initialize()
+    if not  mt5.initialize(path= meta_trader_accounts[account_id]['path'], login=int(meta_trader_accounts[account_id]['login']) , server=meta_trader_accounts[account_id]['server'], password=meta_trader_accounts[account_id]['password']):
+        print("initialize() failed, error code =",mt5.last_error())
     print(meta_trader_accounts[account_id])
-    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
+    #mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
     account_info = mt5.account_info()
     balance = 0
     if account_info :
         print("account_info x : ",account_info)
         balance = account_info.balance
-        mt5.shutdown()
+        
+    mt5.shutdown()
     return balance
 
 # Load MetaTrader accounts from local storage
@@ -41,9 +43,9 @@ def save_meta_trader_accounts():
 
 
 def place_order(account_id, symbol, volume, order_type, price):
-    print("place_order ->account_id :"+account_id +"\n")
-    print(meta_trader_accounts[account_id])
-    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
+    print("strat place_order \n")
+    #mt5.initialize( path=meta_trader_accounts[account_id]['path'],login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'],password=meta_trader_accounts[account_id]['password'])
+    #mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
     request_data = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
@@ -54,9 +56,10 @@ def place_order(account_id, symbol, volume, order_type, price):
         "magic": 234000,
         "comment": "Order from API",
         "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ORDER_FILLING_FOK,
+        "type_filling": mt5.ACCOUNT_TRADE_MODE_DEMO,
     }
     result = mt5.order_send(request_data)
+    print(result)
     mt5.shutdown()
     return result
 
@@ -109,10 +112,14 @@ def add_account():
 
 @app.route('/buy', methods=['POST'])
 def buy():
-    account_id = int(request.form['account_id'])
+    print("\n stat buy =>")
+    account_id = request.form['account_id']
     symbol_input = request.form['symbol']
     lot_size = float(request.form['lot_size'])
+    mt5.initialize( path=meta_trader_accounts[account_id]['path'],login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'],password=meta_trader_accounts[account_id]['password'])
     symbol_info = mt5.symbol_info(symbol_input)
+    print(symbol_input,symbol_info)
+    
     if symbol_info is None:
         message = "Failed to get symbol information for {}".format(symbol_input)
     elif not symbol_info.visible:
