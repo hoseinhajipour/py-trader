@@ -1,146 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MetaTrader 5 Control</title>
     <!-- Bootstrap CSS -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+  </head>
+  <body>
     <div class="container mt-5">
-        <h1 class="mb-4">MetaTrader 5 Control</h1>
+      <h1 class="mb-4">MetaTrader 5 Control</h1>
 
-        <!-- Add MetaTrader account form -->
-        <div class="mb-4">
-            <h3>Add MetaTrader Account</h3>
-            <form action="/add_account" id="add-account-form" method="post">
-                <div class="form-group">
-                    <label for="login">Login:</label>
-                    <input type="text" class="form-control" id="login" name="login" placeholder="MetaTrader Login">
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="MetaTrader Password">
-                </div>
-                <button type="submit" class="btn btn-primary">Add Account</button>
-            </form>
-        </div>
+      <!-- Add MetaTrader account form -->
+      <div class="mb-4">
+        <h3>Add MetaTrader Account</h3>
+        <form action="/add_account" id="add-account-form" method="post">
+          <div class="form-group">
+            <label for="login">Login:</label>
+            <input type="text" class="form-control" id="login" name="login" placeholder="MetaTrader Login" />
+          </div>
+          <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="MetaTrader Password" />
+          </div>
+          <div class="form-group">
+            <label for="server">Server:</label>
+            <input type="text" class="form-control" id="server" name="server" placeholder="MetaTrader Server" />
+          </div>
+          <button type="submit" class="btn btn-primary">Add Account</button>
+        </form>
+      </div>
 
-        <!-- MetaTrader accounts -->
-        <div id="accounts">
-            <h3>MetaTrader Accounts</h3>
-            <ul class="list-group">
-                {% for account_id, account in meta_trader_accounts.items() %}
-                <li class="list-group-item">
-                    <strong>Account {{ account_id }}</strong> - Balance: $<span id="balance{{ account_id }}"></span>
-                    <div class="mt-2">
-                        <label for="symbol{{ account_id }}">Select Symbol:</label>
-                        <select class="form-control" id="symbol{{ account_id }}" name="symbol">
-                            <option value="XAUUSD">XAUUSD</option>
-                            <option value="Nasdaq">Nasdaq</option>
-                            <option value="DowJones">Dow Jones</option>
-                            <option value="Oil">Oil</option>
-                            <option value="EURUSD">EURUSD</option>
-                            <option value="ETHUSD">ETHUSD</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mt-2">
-                        <label for="lot_size{{ account_id }}">Lot Size:</label>
-                        <input type="text" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="Enter lot size">
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" onclick="buy({{ account_id }})" class="btn btn-primary">Buy</button>
-                        <button type="button" onclick="sell({{ account_id }})" class="btn btn-danger">Sell</button>
-                        <button type="button" onclick="closePosition({{ account_id }})" class="btn btn-warning">Close</button>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
+      <!-- MetaTrader accounts -->
+      <div id="accounts">
+        <h3>MetaTrader Accounts</h3>
+        <ul class="list-group">
+          {% for account_id, account in meta_trader_accounts.items() %}
+            <li class="list-group-item">
+              <strong>Account {{ account.login }}</strong> - Balance: <span id="balance{{ account_id }}">{{ account.balance }}$</span>
 
-        <!-- Messages -->
-        <div id="messages" class="mt-4">
-        </div>
+              <div class="mt-2">
+                <button type="button" onclick="removeAccount({{ account_id }})" class="btn btn-danger">Remove Account</button>
+              </div>
+
+              <div class="mt-2">
+                <label for="symbol{{ account_id }}">Select Symbol:</label>
+                <select class="form-control" id="symbol{{ account_id }}" name="symbol">
+                  <option value="XAUUSD">XAUUSD</option>
+                  <option value="Nasdaq">Nasdaq</option>
+                  <option value="DowJones">Dow Jones</option>
+                  <option value="Oil">Oil</option>
+                  <option value="EURUSD">EURUSD</option>
+                  <option value="ETHUSD">ETHUSD</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="mt-2">
+                <label for="lot_size{{ account_id }}">Lot Size:</label>
+                <input type="text" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="Enter lot size" />
+              </div>
+              <div class="mt-2">
+                <button type="button" onclick="buy({{ account_id }})" class="btn btn-primary">Buy</button>
+                <button type="button" onclick="sell({{ account_id }})" class="btn btn-danger">Sell</button>
+                <button type="button" onclick="closePosition({{ account_id }})" class="btn btn-warning">Close</button>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Messages -->
+      <div id="messages" class="mt-4"></div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        $(document).ready(function () {
-            // Submit add account form
-            $('#add-account-form').submit(function (event) {
-                event.preventDefault();
-                var form = $(this);
-                $.ajax({
-                    type: form.attr('method'),
-                    url: form.attr('action'),
-                    data: form.serialize(),
-                    success: function (response) {
-                        if (response.success) {
-                            location.reload();
-                        }
-                    }
-                });
-            });
-        });
-
-        // Function to buy
-        function buy(accountId) {
-            var symbol = $('#symbol' + accountId).val();
-            var lotSize = $('#lot_size' + accountId).val();
-            $.ajax({
-                type: 'POST',
-                url: '/buy',
-                data: {
-                    account_id: accountId,
-                    symbol: symbol,
-                    lot_size: lotSize
-                },
-                success: function (response) {
-                    $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>');
-                    $('#balance' + accountId).text(response.balance);
-                }
-            });
-        }
-
-        // Function to sell
-        function sell(accountId) {
-            var symbol = $('#symbol' + accountId).val();
-            var lotSize = $('#lot_size' + accountId).val();
-            $.ajax({
-                type: 'POST',
-                url: '/sell',
-                data: {
-                    account_id: accountId,
-                    symbol: symbol,
-                    lot_size: lotSize
-                },
-                success: function (response) {
-                    $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>');
-                    $('#balance' + accountId).text(response.balance);
-                }
-            });
-        }
-
-        // Function to close position
-        function closePosition(accountId) {
-            var symbol = $('#symbol' + accountId).val();
-            $.ajax({
-                type: 'POST',
-                url: '/close',
-                data: {
-                    account_id: accountId,
-                    symbol: symbol
-                },
-                success: function (response) {
-                    $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>');
-                    $('#balance' + accountId).text(response.balance);
-                }
-            });
-        }
+      $(document).ready(function () {
+        // Submit add account form
+        $('#add-account-form').submit(function (event) {
+          event.preventDefault()
+          var form = $(this)
+          $.ajax({
+            type: form.attr('method'),
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function (response) {
+              if (response.success) {
+                location.reload()
+              }
+            }
+          })
+        })
+      })
+      
+      // Function to buy
+      function buy(accountId) {
+        var symbol = $('#symbol' + accountId).val()
+        var lotSize = $('#lot_size' + accountId).val()
+        $.ajax({
+          type: 'POST',
+          url: '/buy',
+          data: {
+            account_id: accountId,
+            symbol: symbol,
+            lot_size: lotSize
+          },
+          success: function (response) {
+            $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+            $('#balance' + accountId).text(response.balance)
+          }
+        })
+      }
+      
+      // Function to sell
+      function sell(accountId) {
+        var symbol = $('#symbol' + accountId).val()
+        var lotSize = $('#lot_size' + accountId).val()
+        $.ajax({
+          type: 'POST',
+          url: '/sell',
+          data: {
+            account_id: accountId,
+            symbol: symbol,
+            lot_size: lotSize
+          },
+          success: function (response) {
+            $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+            $('#balance' + accountId).text(response.balance)
+          }
+        })
+      }
+      
+      // Function to close position
+      function closePosition(accountId) {
+        var symbol = $('#symbol' + accountId).val()
+        $.ajax({
+          type: 'POST',
+          url: '/close',
+          data: {
+            account_id: accountId,
+            symbol: symbol
+          },
+          success: function (response) {
+            $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+            $('#balance' + accountId).text(response.balance)
+          }
+        })
+      }
+      // Function to remove account
+      function removeAccount(accountId) {
+        $.ajax({
+          type: 'POST',
+          url: '/remove_account',
+          data: {
+            account_id: accountId
+          },
+          success: function (response) {
+            if (response.success) {
+              location.reload() // Reload the page after successful removal
+            } else {
+              // Handle error if necessary
+              console.log('Error:', response.message)
+            }
+          }
+        })
+      }
     </script>
-</body>
+  </body>
 </html>

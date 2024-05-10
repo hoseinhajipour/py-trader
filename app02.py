@@ -4,17 +4,22 @@ import json
 
 app = Flask(__name__)
 
-# Initialize MetaTrader 5 terminal
-mt5.initialize()
+
 
 # Create a dictionary to store MetaTrader accounts
 meta_trader_accounts = {}
 
 def get_account_balance(account_id):
-    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'])
+    # Initialize MetaTrader 5 terminal
+    mt5.initialize()
+    print(meta_trader_accounts[account_id])
+    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
     account_info = mt5.account_info()
-    balance = account_info.balance
-    mt5.shutdown()
+    balance = 0
+    if account_info :
+        print("account_info x : ",account_info)
+        balance = account_info.balance
+        mt5.shutdown()
     return balance
 
 # Load MetaTrader accounts from local storage
@@ -24,9 +29,7 @@ try:
         print(meta_trader_accounts)
         # Load balances for each account
         for account_id in meta_trader_accounts:
-            print("account_id : "+account_id)
             balance = get_account_balance(account_id)
-            print(balance)
             meta_trader_accounts[account_id]['balance'] = balance
 except FileNotFoundError:
     pass
@@ -38,7 +41,9 @@ def save_meta_trader_accounts():
 
 
 def place_order(account_id, symbol, volume, order_type, price):
-    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'])
+    print("place_order ->account_id :"+account_id +"\n")
+    print(meta_trader_accounts[account_id])
+    mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
     request_data = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
@@ -95,10 +100,12 @@ def index():
 def add_account():
     login = request.form['login']
     password = request.form['password']
+    server = request.form['server']  # Get server from the form
     account_id = len(meta_trader_accounts) + 1
-    meta_trader_accounts[account_id] = {'login': login, 'password': password}
+    meta_trader_accounts[account_id] = {'login': login, 'password': password, 'server': server}  # Store server along with other account info
     save_meta_trader_accounts()
     return jsonify(success=True)
+
 
 @app.route('/buy', methods=['POST'])
 def buy():
@@ -149,6 +156,15 @@ def close():
     message = close_positions(account_id, symbol_to_close)
     balance = get_account_balance(account_id)
     return jsonify(message=message, balance=balance)
+
+@app.route('/remove_account', methods=['POST'])
+def remove_account():
+    select_account_id = request.form['account_id']
+    for account_id in meta_trader_accounts:
+        if(account_id == select_account_id):
+            del meta_trader_accounts[account_id]
+            save_meta_trader_accounts()
+            return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
