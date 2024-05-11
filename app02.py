@@ -103,9 +103,10 @@ def index():
 def add_account():
     login = request.form['login']
     password = request.form['password']
-    server = request.form['server']  # Get server from the form
+    server = request.form['server']
+    path = request.form['path']
     account_id = len(meta_trader_accounts) + 1
-    meta_trader_accounts[account_id] = {'login': login, 'password': password, 'server': server}  # Store server along with other account info
+    meta_trader_accounts[account_id] = {'login': login, 'password': password, 'server': server, 'path': path}  # Store server along with other account info
     save_meta_trader_accounts()
     return jsonify(success=True)
 
