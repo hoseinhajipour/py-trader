@@ -133,7 +133,7 @@
     <div class="row">
 
       <div class="col-2">
-        <input type="checkbox">
+        <input id="account_{{ account_id }}" name="account_{{ account_id }}" type="checkbox">
         <strong>Account {{ account.login }}</strong> - Balance: <span id="balance{{ account_id }}">{{ account.balance
           }}$</span>
         <button type="button" onclick="removeAccount({{ account_id }})" class="btn btn-danger">D</button>
@@ -145,7 +145,8 @@
             <input type="number" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="lot" />
           </div>
           <div class="col-4">
-            <button type="button" onclick="closePosition({{ account_id }})" class="form-control btn-warning">X</button>
+            <button type="button" onclick="closePosition({{ account_id }} ,'XAUUSD')"
+              class="form-control btn-warning">X</button>
           </div>
         </div>
 
@@ -157,7 +158,8 @@
             <input type="number" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="lot" />
           </div>
           <div class="col-4">
-            <button type="button" onclick="closePosition({{ account_id }})" class="form-control btn-warning">X</button>
+            <button type="button" onclick="closePosition({{ account_id }} ,'Nasdaq')"
+              class="form-control btn-warning">X</button>
           </div>
         </div>
       </div>
@@ -167,7 +169,8 @@
             <input type="number" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="lot" />
           </div>
           <div class="col-4">
-            <button type="button" onclick="closePosition({{ account_id }})" class="form-control btn-warning">X</button>
+            <button type="button" onclick="closePosition({{ account_id }},'Dow Jones')"
+              class="form-control btn-warning">X</button>
           </div>
         </div>
       </div>
@@ -177,7 +180,8 @@
             <input type="number" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="lot" />
           </div>
           <div class="col-4">
-            <button type="button" onclick="closePosition({{ account_id }})" class="form-control btn-warning">X</button>
+            <button type="button" onclick="closePosition({{ account_id }},'Oil')"
+              class="form-control btn-warning">X</button>
           </div>
         </div>
       </div>
@@ -187,7 +191,8 @@
             <input type="number" class="form-control" id="lot_size{{ account_id }}" name="lot_size" placeholder="lot" />
           </div>
           <div class="col-4">
-            <button type="button" onclick="closePosition({{ account_id }})" class="form-control btn-warning">X</button>
+            <button type="button" onclick="closePosition({{ account_id }} , 'EURUSD')"
+              class="form-control btn-warning">X</button>
           </div>
         </div>
       </div>
@@ -257,7 +262,7 @@
     }
 
     // Function to close position
-    function closePosition(accountId) {
+    function closePosition(accountId, symbol) {
       var symbol = $('#symbol' + accountId).val()
       $.ajax({
         type: 'POST',
@@ -292,13 +297,53 @@
     }
 
     function buy_All(symbol) {
-
+      var symbol = $('#symbol' + accountId).val()
+      var lotSize = $('#lot_size' + accountId).val()
+      $.ajax({
+        type: 'POST',
+        url: '/buy',
+        data: {
+          account_id: accountId,
+          symbol: symbol,
+          lot_size: lotSize
+        },
+        success: function (response) {
+          $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+          $('#balance' + accountId).text(response.balance)
+        }
+      })
     }
     function sell_All(symbol) {
-
+      var symbol = $('#symbol' + accountId).val()
+      var lotSize = $('#lot_size' + accountId).val()
+      $.ajax({
+        type: 'POST',
+        url: '/sell',
+        data: {
+          account_id: accountId,
+          symbol: symbol,
+          lot_size: lotSize
+        },
+        success: function (response) {
+          $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+          $('#balance' + accountId).text(response.balance)
+        }
+      })
     }
     function Close_All(symbol) {
-
+      var symbol = $('#symbol' + accountId).val()
+      $.ajax({
+        type: 'POST',
+        url: '/close',
+        data: {
+          account_id: accountId,
+          symbol: symbol
+        },
+        success: function (response) {
+          $('#messages').html('<div class="alert alert-primary" role="alert">' + response.message + '</div>')
+          $('#balance' + accountId).text(response.balance)
+        }
+      })
     }
   </script>
 </body>
