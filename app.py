@@ -43,25 +43,35 @@ def save_meta_trader_accounts():
 
 
 def place_order(account_id, symbol, volume, order_type, price):
-    print("strat place_order \n")
-    #mt5.initialize( path=meta_trader_accounts[account_id]['path'],login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'],password=meta_trader_accounts[account_id]['password'])
-    #mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'],meta_trader_accounts[account_id]['server'])
+    print("Start place_order \n")
+    
+    if not mt5.initialize(path=meta_trader_accounts[account_id]['path'], login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'], password=meta_trader_accounts[account_id]['password']):
+        print("initialize() failed, error code =", mt5.last_error())
+        return "Initialize failed"
+    
+    symbol_info = mt5.symbol_info(symbol)
+    if symbol_info is None:
+        mt5.shutdown()
+        return f"Failed to get symbol information for {symbol}"
+    
+    deviation = 10  # Define deviation according to your strategy or requirements
     request_data = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
         "volume": volume,
         "type": order_type,
         "price": price,
-        "deviation": 10,
+        "deviation": deviation,
         "magic": 234000,
         "comment": "Order from API",
         "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ACCOUNT_TRADE_MODE_DEMO,
+        "type_filling": mt5.ORDER_FILLING_IOC,  # Updated type_filling parameter
     }
     result = mt5.order_send(request_data)
     print(result)
     mt5.shutdown()
     return result
+
 
 def close_positions(account_id, symbol_to_close):
     mt5.login(meta_trader_accounts[account_id]['login'], meta_trader_accounts[account_id]['password'])
