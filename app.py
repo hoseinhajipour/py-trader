@@ -42,7 +42,7 @@ def save_meta_trader_accounts():
 
 
 
-def place_order(account_id, symbol, volume, order_type, price):
+def place_order(account_id, symbol, volume, order_type, price,type_filling):
     print("Start place_order \n")
     
     if not mt5.initialize(path=meta_trader_accounts[account_id]['path'], login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'], password=meta_trader_accounts[account_id]['password']):
@@ -65,7 +65,7 @@ def place_order(account_id, symbol, volume, order_type, price):
         "magic": 234000,
         "comment": "Order from API",
         "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ORDER_FILLING_IOC,  # Updated type_filling parameter
+        "type_filling": type_filling,  # Updated type_filling parameter
     }
     result = mt5.order_send(request_data)
     print(result)
@@ -115,34 +115,62 @@ def add_account():
     password = request.form['password']
     server = request.form['server']
     path = request.form['path']
+    
+    # Extract symbol names and lot percentages from form data
+    symbol_lot_percentages = {}
+    symbols = ['XAUUSD', 'Nasdaq', 'Dow_Jones', 'Oil', 'EURUSD']
+    for symbol in symbols:
+        symbol_lot_percentages[symbol] = {
+            'symbol': request.form.get(f"{symbol}_symbol"),
+            'lot_percent': float(request.form.get(f"{symbol}_lot_percent"))
+        }
+    
+    # Store account details and symbol lot percentages
     account_id = len(meta_trader_accounts) + 1
-    meta_trader_accounts[account_id] = {'login': login, 'password': password, 'server': server, 'path': path}  # Store server along with other account info
+    meta_trader_accounts[account_id] = {
+        'login': login,
+        'password': password,
+        'server': server,
+        'path': path,
+        'symbol_lot_percentages': symbol_lot_percentages
+    }
+    
+    # Save updated meta_trader_accounts dictionary to JSON file
     save_meta_trader_accounts()
+    
     return jsonify(success=True)
-
 
 @app.route('/buy', methods=['POST'])
 def buy():
-    print("\n stat buy =>")
-    account_id = request.form['account_id']
+    account_id = int(request.form['account_id'])
     symbol_input = request.form['symbol']
     lot_size = float(request.form['lot_size'])
-    mt5.initialize( path=meta_trader_accounts[account_id]['path'],login=int(meta_trader_accounts[account_id]['login']), server=meta_trader_accounts[account_id]['server'],password=meta_trader_accounts[account_id]['password'])
-    symbol_info = mt5.symbol_info(symbol_input)
-    print(symbol_input,symbol_info)
     
-    if symbol_info is None:
-        message = "Failed to get symbol information for {}".format(symbol_input)
-    elif not symbol_info.visible:
-        message = "Symbol {} is not visible, please check if it's available.".format(symbol_input)
-    elif not symbol_info.bid or not symbol_info.ask:
-        message = "Failed to get bid/ask prices for symbol {}".format(symbol_input)
-    else:
-        result = place_order(account_id, symbol_input, lot_size, mt5.ORDER_TYPE_BUY, symbol_info.ask)
-        if result.retcode != mt5.TRADE_RETCODE_DONE:
-            message = "Buy order failed: {}".format(result.comment)
+    # Retrieve symbol and lot percent from account's data
+    symbol_lot_percentages = meta_trader_accounts[account_id]['symbol_lot_percentages']
+    
+    # Check if the symbol exists in the account's data
+    if symbol_input in symbol_lot_percentages:
+        symbol_info = mt5.symbol_info(symbol_input)
+        if symbol_info is None:
+            message = f"Failed to get symbol information for {symbol_input}"
+        elif not symbol_info.visible:
+            message = f"Symbol {symbol_input} is not visible, please check if it's available."
+        elif not symbol_info.bid or not symbol_info.ask:
+            message = f"Failed to get bid/ask prices for symbol {symbol_input}"
         else:
-            message = "Buy order placed successfully"
+            # Calculate lot size based on lot percentage from account data
+            lot_percent = symbol_lot_percentages[symbol_input]['lot_percent']
+            calculated_lot_size = lot_size * lot_percent / 100.0
+            
+            result = place_order(account_id, symbol_input, calculated_lot_size, mt5.ORDER_TYPE_BUY, symbol_info.ask, mt5.ORDER_FILLING_FOK)
+            if result.retcode != mt5.TRADE_RETCODE_DONE:
+                message = f"Buy order failed: {result.comment}"
+            else:
+                message = "Buy order placed successfully"
+    else:
+        message = f"Symbol {symbol_input} not found in account's symbol lot percentages"
+    
     balance = get_account_balance(account_id)
     return jsonify(message=message, balance=balance)
 
@@ -151,19 +179,32 @@ def sell():
     account_id = int(request.form['account_id'])
     symbol_input = request.form['symbol']
     lot_size = float(request.form['lot_size'])
-    symbol_info = mt5.symbol_info(symbol_input)
-    if symbol_info is None:
-        message = "Failed to get symbol information for {}".format(symbol_input)
-    elif not symbol_info.visible:
-        message = "Symbol {} is not visible, please check if it's available.".format(symbol_input)
-    elif not symbol_info.bid or not symbol_info.ask:
-        message = "Failed to get bid/ask prices for symbol {}".format(symbol_input)
-    else:
-        result = place_order(account_id, symbol_input, lot_size, mt5.ORDER_TYPE_SELL, symbol_info.bid)
-        if result.retcode != mt5.TRADE_RETCODE_DONE:
-            message = "Sell order failed: {}".format(result.comment)
+    
+    # Retrieve symbol and lot percent from account's data
+    symbol_lot_percentages = meta_trader_accounts[account_id]['symbol_lot_percentages']
+    
+    # Check if the symbol exists in the account's data
+    if symbol_input in symbol_lot_percentages:
+        symbol_info = mt5.symbol_info(symbol_input)
+        if symbol_info is None:
+            message = f"Failed to get symbol information for {symbol_input}"
+        elif not symbol_info.visible:
+            message = f"Symbol {symbol_input} is not visible, please check if it's available."
+        elif not symbol_info.bid or not symbol_info.ask:
+            message = f"Failed to get bid/ask prices for symbol {symbol_input}"
         else:
-            message = "Sell order placed successfully"
+            # Calculate lot size based on lot percentage from account data
+            lot_percent = symbol_lot_percentages[symbol_input]['lot_percent']
+            calculated_lot_size = lot_size * lot_percent / 100.0
+            
+            result = place_order(account_id, symbol_input, calculated_lot_size, mt5.ORDER_TYPE_SELL, symbol_info.bid, mt5.ORDER_FILLING_FOK)
+            if result.retcode != mt5.TRADE_RETCODE_DONE:
+                message = f"Sell order failed: {result.comment}"
+            else:
+                message = "Sell order placed successfully"
+    else:
+        message = f"Symbol {symbol_input} not found in account's symbol lot percentages"
+    
     balance = get_account_balance(account_id)
     return jsonify(message=message, balance=balance)
 
@@ -171,9 +212,19 @@ def sell():
 def close():
     account_id = int(request.form['account_id'])
     symbol_to_close = request.form['symbol']
-    message = close_positions(account_id, symbol_to_close)
+    
+    # Retrieve symbol and lot percent from account's data
+    symbol_lot_percentages = meta_trader_accounts[account_id]['symbol_lot_percentages']
+    
+    # Check if the symbol exists in the account's data
+    if symbol_to_close in symbol_lot_percentages:
+        message = close_positions(account_id, symbol_to_close)
+    else:
+        message = f"Symbol {symbol_to_close} not found in account's symbol lot percentages"
+    
     balance = get_account_balance(account_id)
     return jsonify(message=message, balance=balance)
+
 
 @app.route('/remove_account', methods=['POST'])
 def remove_account():

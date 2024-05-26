@@ -3,13 +3,14 @@
         "login": "6615926",
         "password": "yw*jZYY9",
         "server": "AMarkets-Demo",
-        "path" : "C:/Program Files/AMarkets - MetaTrader 5/terminal64.exe"
+        "path": "C:/Program Files/AMarkets - MetaTrader 5/terminal64.exe",
+        "balance": 9755.57
     },
     "2": {
         "login": "789243",
         "password": "hMvG76gZh$",
         "server": "IFCMarkets-Demo",
-        "path" : "C:/Program Files/IFC Markets MT5/terminal64.exe"
-
+        "path": "C:/Program Files/IFC Markets MT5/terminal64.exe",
+        "balance": 10071.6
     }
 }
