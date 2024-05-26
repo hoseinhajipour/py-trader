@@ -24,6 +24,7 @@ def get_account_balance(account_id):
     mt5.shutdown()
     return balance
 
+
 # Load MetaTrader accounts from local storage
 try:
     with open('mt_accounts.json', 'r') as file:
@@ -138,6 +139,18 @@ def add_account():
     # Save updated meta_trader_accounts dictionary to JSON file
     save_meta_trader_accounts()
     
+
+    try:
+        with open('mt_accounts.json', 'r') as file:
+            meta_trader_accounts = json.load(file)
+            print(meta_trader_accounts)
+            # Load balances for each account
+            for account_id in meta_trader_accounts:
+                balance = get_account_balance(account_id)
+                meta_trader_accounts[account_id]['balance'] = balance
+    except FileNotFoundError:
+        pass
+
     return jsonify(success=True)
 
 @app.route('/buy', methods=['POST'])

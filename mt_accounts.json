@@ -4,6 +4,28 @@
         "password": "yw*jZYY9",
         "server": "AMarkets-Demo",
         "path": "C:/Program Files/AMarkets - MetaTrader 5/terminal64.exe",
+        "symbol_lot_percentages": {
+            "XAUUSD": {
+                "symbol": "XAUUSDb",
+                "lot_percent": 100.0
+            },
+            "Nasdaq": {
+                "symbol": "Nasdaq100",
+                "lot_percent": 100.0
+            },
+            "Dow_Jones": {
+                "symbol": null,
+                "lot_percent": 100.0
+            },
+            "Oil": {
+                "symbol": "Oil&Gas",
+                "lot_percent": 100.0
+            },
+            "EURUSD": {
+                "symbol": "EURUSDb",
+                "lot_percent": 100.0
+            }
+        },
         "balance": 9755.57
     },
     "2": {
@@ -11,6 +33,27 @@
         "password": "hMvG76gZh$",
         "server": "IFCMarkets-Demo",
         "path": "C:/Program Files/IFC Markets MT5/terminal64.exe",
-        "balance": 10071.6
+        "symbol_lot_percentages": {
+            "XAUUSD": {
+                "symbol": "XAUUSD",
+                "lot_percent": 100.0
+            },
+            "Nasdaq": {
+                "symbol": "Nasdaq",
+                "lot_percent": 100.0
+            },
+            "Dow_Jones": {
+                "symbol": null,
+                "lot_percent": 100.0
+            },
+            "Oil": {
+                "symbol": "Oil",
+                "lot_percent": 100.0
+            },
+            "EURUSD": {
+                "symbol": "EURUSD",
+                "lot_percent": 100.0
+            }
+        }
     }
 }
